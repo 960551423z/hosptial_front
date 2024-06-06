@@ -15,22 +15,14 @@
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
         <el-button type="primary" :icon="CirclePlus" @click="proTable?.element?.toggleAllSelection">全选 / 全不选</el-button>
-        <el-button type="primary" :icon="Pointer" plain @click="setCurrent">选中第五行</el-button>
         <el-button type="danger" :icon="Delete" plain :disabled="!scope.isSelected" @click="batchDelete(scope.selectedListIds)">
           批量删除用户
         </el-button>
-      </template>
-      <!-- Expand -->
-      <template #expand="scope">
-        {{ scope.row }}
       </template>
       <!-- 表格操作 -->
       <template #operation="scope">
         <el-button type="primary" link :icon="Refresh" @click="resetPass(scope.row)">重置密码</el-button>
         <el-button type="primary" link :icon="Delete" @click="deleteAccount(scope.row)">删除</el-button>
-      </template>
-      <template #append>
-        <span style="color: var(--el-color-primary)">我是插入在表格最后的内容。若表格有合计行，该内容会位于合计行之上。</span>
       </template>
     </ProTable>
   </div>
@@ -50,24 +42,13 @@ import { getUserList, deleteUser, resetUserPassWord, getUserStatus, getUserGende
 // ProTable 实例
 const proTable = ref<ProTableInstance>();
 
-// 自定义渲染表头（使用tsx语法）
-const headerRender = (scope: HeaderRenderScope<User.ResUserList>) => {
-  return (
-    <el-button type="primary" onClick={() => ElMessage.success("我是通过 tsx 语法渲染的表头")}>
-      {scope.column.label}
-    </el-button>
-  );
-};
-
 // 表格配置项
 const columns = reactive<ColumnProps<User.ResUserList>[]>([
   { type: "selection", width: 80 },
   { type: "index", label: "#", width: 80 },
-  { type: "expand", label: "Expand", width: 100 },
   {
     prop: "base",
     label: "基本信息",
-    headerRender,
     _children: [
       { prop: "username", label: "用户姓名", width: 110 },
       { prop: "user.detail.age", label: "年龄", width: 100 },

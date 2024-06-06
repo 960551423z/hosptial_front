@@ -11,27 +11,8 @@
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
         <el-button v-auth="'add'" type="primary" :icon="CirclePlus" @click="openDrawer('新增')">新增用户</el-button>
-        <el-button v-auth="'batchAdd'" type="primary" :icon="Upload" plain @click="batchAdd">批量添加用户</el-button>
-        <el-button v-auth="'export'" type="primary" :icon="Download" plain @click="downloadFile">导出用户数据</el-button>
-        <el-button type="primary" plain @click="toDetail">To 子集详情页面</el-button>
         <el-button type="danger" :icon="Delete" plain :disabled="!scope.isSelected" @click="batchDelete(scope.selectedListIds)">
           批量删除用户
-        </el-button>
-      </template>
-      <!-- Expand -->
-      <template #expand="scope">
-        {{ scope.row }}
-      </template>
-      <!-- usernameHeader -->
-      <template #usernameHeader="scope">
-        <el-button type="primary" @click="ElMessage.success('我是通过作用域插槽渲染的表头')">
-          {{ scope.column.label }}
-        </el-button>
-      </template>
-      <!-- createTime -->
-      <template #createTime="scope">
-        <el-button type="primary" link @click="ElMessage.success('我是通过作用域插槽渲染的内容')">
-          {{ scope.row.createTime }}
         </el-button>
       </template>
       <!-- 表格操作 -->
@@ -49,17 +30,15 @@
 
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
-import { useRouter } from "vue-router";
 import { User } from "@/api/interface";
 import { useHandleData } from "@/hooks/useHandleData";
-import { useDownload } from "@/hooks/useDownload";
 import { useAuthButtons } from "@/hooks/useAuthButtons";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import ProTable from "@/components/ProTable/index.vue";
 import ImportExcel from "@/components/ImportExcel/index.vue";
 import UserDrawer from "@/views/proTable/components/UserDrawer.vue";
 import { ProTableInstance, ColumnProps, HeaderRenderScope } from "@/components/ProTable/interface";
-import { CirclePlus, Delete, EditPen, Download, Upload, View, Refresh } from "@element-plus/icons-vue";
+import { CirclePlus, Delete, EditPen, View, Refresh } from "@element-plus/icons-vue";
 import {
   getUserList,
   deleteUser,
@@ -67,18 +46,9 @@ import {
   addUser,
   changeUserStatus,
   resetUserPassWord,
-  exportUserInfo,
-  BatchAddUser,
   getUserStatus,
   getUserGender
 } from "@/api/modules/user";
-
-const router = useRouter();
-
-// 跳转详情页
-const toDetail = () => {
-  router.push(`/proTable/useProTable/detail/${Math.random().toFixed(3)}?params=detail-page`);
-};
 
 // ProTable 实例
 const proTable = ref<ProTableInstance>();
@@ -110,31 +80,13 @@ const getTableList = (params: any) => {
 // 页面按钮权限（按钮权限既可以使用 hooks，也可以直接使用 v-auth 指令，指令适合直接绑定在按钮上，hooks 适合根据按钮权限显示不同的内容）
 const { BUTTONS } = useAuthButtons();
 
-// 自定义渲染表头（使用tsx语法）
-const headerRender = (scope: HeaderRenderScope<User.ResUserList>) => {
-  return (
-    <el-button type="primary" onClick={() => ElMessage.success("我是通过 tsx 语法渲染的表头")}>
-      {scope.column.label}
-    </el-button>
-  );
-};
-
 // 表格配置项
 const columns = reactive<ColumnProps<User.ResUserList>[]>([
   { type: "selection", fixed: "left", width: 70 },
-  { type: "sort", label: "Sort", width: 80 },
-  { type: "expand", label: "Expand", width: 85 },
   {
     prop: "username",
     label: "用户姓名",
-    search: { el: "input", tooltip: "我是搜索提示" },
-    render: scope => {
-      return (
-        <el-button type="primary" link onClick={() => ElMessage.success("我是通过 tsx 语法渲染的内容")}>
-          {scope.row.username}
-        </el-button>
-      );
-    }
+    search: { el: "input", tooltip: "我是搜索提示" }
   },
   {
     prop: "gender",
@@ -195,7 +147,6 @@ const columns = reactive<ColumnProps<User.ResUserList>[]>([
   {
     prop: "createTime",
     label: "创建时间",
-    headerRender,
     width: 180,
     search: {
       el: "date-picker",
@@ -237,25 +188,6 @@ const resetPass = async (params: User.ResUserList) => {
 const changeStatus = async (row: User.ResUserList) => {
   await useHandleData(changeUserStatus, { id: row.id, status: row.status == 1 ? 0 : 1 }, `切换【${row.username}】用户状态`);
   proTable.value?.getTableList();
-};
-
-// 导出用户列表
-const downloadFile = async () => {
-  ElMessageBox.confirm("确认导出用户数据?", "温馨提示", { type: "warning" }).then(() =>
-    useDownload(exportUserInfo, "用户列表", proTable.value?.searchParam)
-  );
-};
-
-// 批量添加用户
-const dialogRef = ref<InstanceType<typeof ImportExcel> | null>(null);
-const batchAdd = () => {
-  const params = {
-    title: "用户",
-    tempApi: exportUserInfo,
-    importApi: BatchAddUser,
-    getTableList: proTable.value?.getTableList
-  };
-  dialogRef.value?.acceptParams(params);
 };
 
 // 打开 drawer(新增、查看、编辑)
